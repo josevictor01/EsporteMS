@@ -1,0 +1,15 @@
+{
+  "name": "sistema-overlays",
+  "version": "1.0.0",
+  "description": "Sistema de Overlays Esportivos para Transmissão OBS (Futebol, Basquete, Futsal etc)",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "ws": "^8.18.1"
+  }
+}
