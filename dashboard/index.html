@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel de Controle - Esportes</title>
+  <style>
+    body {
+      font-family: 'Arial Black', sans-serif;
+      background: #001f4d;
+      margin: 0;
+      padding: 20px;
+      color: white;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    section {
+      background: #0047ab;
+      border: 3px solid #ff0000;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 0 15px #000;
+    }
+    label, input, select {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 5px;
+    }
+    .score-buttons, .control-buttons, .extra-buttons {
+      margin-top: 15px;
+    }
+    button {
+      background: #ffcc00;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin: 5px 5px 0 0;
+      font-weight: bold;
+      cursor: pointer;
+      color: #000;
+    }
+    button:hover {
+      background: #ffc400;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Painel de Controle - Transmissão Esportiva</h1>
+
+<label for="esporte">Esporte:</label>
+<select id="esporte" onchange="trocarEsporte()">
+  <option value="futebol">Futebol</option>
+  <option value="basquete">Basquete</option>
+</select>
+
+<!-- Painel Futebol -->
+<section id="painel-futebol">
+  <h2>Futebol</h2>
+  <label>Time A: <input type="text" id="f_timeA" value="Time A"></label>
+  <label>Time B: <input type="text" id="f_timeB" value="Time B"></label>
+
+  <label>Gols A: <span id="f_golsA">0</span></label>
+  <div class="score-buttons">
+    <button onclick="alterarPlacar('futebol', 'A', 1)">+1</button>
+    <button onclick="alterarPlacar('futebol', 'A', -1)">-1</button>
+  </div>
+
+  <label>Gols B: <span id="f_golsB">0</span></label>
+  <div class="score-buttons">
+    <button onclick="alterarPlacar('futebol', 'B', 1)">+1</button>
+    <button onclick="alterarPlacar('futebol', 'B', -1)">-1</button>
+  </div>
+
+  <label>Minutos iniciais: <input type="number" id="f_minutos" value="0"></label>
+  <label>Tempo: <input type="text" id="f_tempo" value="1º Tempo"></label>
+
+  <label>Acréscimos (min): <input type="number" id="f_acrescimos" value="0"></label>
+  <div class="extra-buttons">
+    <button onclick="mostrarAcrescimos()">Mostrar Acréscimos</button>
+    <button onclick="removerAcrescimos()">Remover Acréscimos</button>
+  </div>
+
+  <h3>Cartões Time A</h3>
+  <label>Amarelos: <input type="number" id="f_amarelosA" value="0"></label>
+  <label>Vermelhos: <input type="number" id="f_vermelhosA" value="0"></label>
+
+  <h3>Cartões Time B</h3>
+  <label>Amarelos: <input type="number" id="f_amarelosB" value="0"></label>
+  <label>Vermelhos: <input type="number" id="f_vermelhosB" value="0"></label>
+
+  <div class="extra-buttons">
+    <button onclick="enviarCartoes()">Atualizar Cartões</button>
+    <button onclick="mostrarCartoes()">Mostrar Cartões</button>
+    <button onclick="ocultarCartoes()">Ocultar Cartões</button>
+  </div>
+
+  <div class="control-buttons">
+    <button onclick="enviarFutebol()">Iniciar Futebol</button>
+    <button onclick="pausar('futebol')">Pausar</button>
+    <button onclick="retomar('futebol')">Retomar</button>
+    <button onclick="zerar('futebol')">Zerar Cronômetro</button>
+  </div>
+</section>
+
+<!-- Painel Basquete -->
+<section id="painel-basquete" style="display: none;">
+  <h2>Basquete</h2>
+  <label>Time A: <input type="text" id="b_timeA" value="Time A"></label>
+  <label>Time B: <input type="text" id="b_timeB" value="Time B"></label>
+
+  <label>Pontos A: <span id="b_pontosA">0</span></label>
+  <div class="score-buttons">
+    <button onclick="alterarPlacar('basquete', 'A', 1)">+1</button>
+    <button onclick="alterarPlacar('basquete', 'A', 2)">+2</button>
+    <button onclick="alterarPlacar('basquete', 'A', 3)">+3</button>
+    <button onclick="alterarPlacar('basquete', 'A', -1)">-1</button>
+  </div>
+
+  <label>Pontos B: <span id="b_pontosB">0</span></label>
+  <div class="score-buttons">
+    <button onclick="alterarPlacar('basquete', 'B', 1)">+1</button>
+    <button onclick="alterarPlacar('basquete', 'B', 2)">+2</button>
+    <button onclick="alterarPlacar('basquete', 'B', 3)">+3</button>
+    <button onclick="alterarPlacar('basquete', 'B', -1)">-1</button>
+  </div>
+
+  <label>Período: <input type="text" id="b_periodo" value="1º Quarto"></label>
+  <label>Duração do Período (minutos): <input type="number" id="b_duracao" value="10"></label>
+
+  <div class="control-buttons">
+    <button onclick="enviarBasquete()">Iniciar Basquete</button>
+    <button onclick="pausar('basquete')">Pausar</button>
+    <button onclick="retomar('basquete')">Retomar</button>
+    <button onclick="zerar('basquete')">Zerar Cronômetro</button>
+  </div>
+</section>
+
+<script>
+const socket = new WebSocket("ws://localhost:3000");
+
+let placar = {
+  futebol: { A: 0, B: 0 },
+  basquete: { A: 0, B: 0 }
+};
+
+function trocarEsporte() {
+  const esporte = document.getElementById("esporte").value;
+  document.getElementById("painel-futebol").style.display = esporte === "futebol" ? "block" : "none";
+  document.getElementById("painel-basquete").style.display = esporte === "basquete" ? "block" : "none";
+}
+
+function alterarPlacar(tipo, time, valor) {
+  placar[tipo][time] = Math.max(0, placar[tipo][time] + valor);
+  document.getElementById(`${tipo[0]}_${tipo === 'futebol' ? 'gols' : 'pontos'}${time}`).textContent = placar[tipo][time];
+  if (tipo === 'futebol') enviarFutebol();
+  if (tipo === 'basquete') enviarBasquete();
+}
+
+function enviarFutebol() {
+  const data = {
+    tipo: "futebol",
+    acao: "iniciar",
+    timeA: document.getElementById("f_timeA").value,
+    golsA: placar.futebol.A,
+    timeB: document.getElementById("f_timeB").value,
+    golsB: placar.futebol.B,
+    minutos: parseInt(document.getElementById("f_minutos").value),
+    tempo: document.getElementById("f_tempo").value,
+  };
+  socket.send(JSON.stringify(data));
+}
+
+function enviarBasquete() {
+  const data = {
+    tipo: "basquete",
+    acao: "iniciar",
+    timeA: document.getElementById("b_timeA").value,
+    pontosA: placar.basquete.A,
+    timeB: document.getElementById("b_timeB").value,
+    pontosB: placar.basquete.B,
+    periodo: document.getElementById("b_periodo").value,
+    duracao: parseInt(document.getElementById("b_duracao").value) * 60
+  };
+  socket.send(JSON.stringify(data));
+}
+
+function pausar(tipo) {
+  socket.send(JSON.stringify({ tipo: tipo, acao: "pausar" }));
+}
+
+function retomar(tipo) {
+  socket.send(JSON.stringify({ tipo: tipo, acao: "retomar" }));
+}
+
+function zerar(tipo) {
+  socket.send(JSON.stringify({ tipo: tipo, acao: "zerar" }));
+}
+
+function mostrarAcrescimos() {
+  const valor = parseInt(document.getElementById("f_acrescimos").value);
+  socket.send(JSON.stringify({ tipo: "futebol", acao: "acrescimos", valor }));
+}
+
+function removerAcrescimos() {
+  socket.send(JSON.stringify({ tipo: "futebol", acao: "remover_acrescimos" }));
+}
+
+function enviarCartoes() {
+  const data = {
+    tipo: "futebol",
+    acao: "cartoes",
+    amarelosA: parseInt(document.getElementById("f_amarelosA").value),
+    vermelhosA: parseInt(document.getElementById("f_vermelhosA").value),
+    amarelosB: parseInt(document.getElementById("f_amarelosB").value),
+    vermelhosB: parseInt(document.getElementById("f_vermelhosB").value),
+  };
+  socket.send(JSON.stringify(data));
+}
+
+function mostrarCartoes() {
+  socket.send(JSON.stringify({ tipo: "futebol", acao: "mostrar_cartoes" }));
+}
+
+function ocultarCartoes() {
+  socket.send(JSON.stringify({ tipo: "futebol", acao: "ocultar_cartoes" }));
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel de Escalação - Futebol / Basquete</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #001f4d;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .bloco-time {
+      border: 2px solid #ffcc00;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 25px;
+      background-color: #002d72;
+    }
+
+    label, input, select {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    input[type="text"], input[type="number"], select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    .jogadores {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .jogador-card {
+      background-color: #003a8c;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .botoes {
+      margin-top: 20px;
+    }
+
+    button {
+      background-color: #ffcc00;
+      color: black;
+      padding: 10px 15px;
+      margin: 10px 5px 0 0;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Painel de Escalação - Futebol ou Basquete</h1>
+
+<label for="esporte">Esporte:</label>
+<select id="esporte" onchange="montarTimes()">
+  <option value="futebol">Futebol</option>
+  <option value="basquete">Basquete</option>
+</select>
+
+<!-- Time A -->
+<div class="bloco-time">
+  <h2>Time A</h2>
+  <label>Nome do Time:</label>
+  <input type="text" id="nomeTimeA" placeholder="Ex: Brasil FC" />
+  <label>Técnico:</label>
+  <input type="text" id="tecnicoA" placeholder="Nome do técnico A" />
+  <div id="form-jogadoresA" class="jogadores"></div>
+</div>
+
+<!-- Time B -->
+<div class="bloco-time">
+  <h2>Time B</h2>
+  <label>Nome do Time:</label>
+  <input type="text" id="nomeTimeB" placeholder="Ex: Argentina FC" />
+  <label>Técnico:</label>
+  <input type="text" id="tecnicoB" placeholder="Nome do técnico B" />
+  <div id="form-jogadoresB" class="jogadores"></div>
+</div>
+
+<div class="botoes">
+  <button onclick="mostrarTime('A')">Mostrar Time A</button>
+  <button onclick="mostrarTime('B')">Mostrar Time B</button>
+  <button onclick="ocultarEscalacao()">Ocultar Escalação</button>
+</div>
+
+<script>
+  const socket = new WebSocket("ws://localhost:3000");
+
+  function montarTimes() {
+    const esporte = document.getElementById("esporte").value;
+    const total = esporte === "futebol" ? 11 : 5;
+    criarJogadores("A", total);
+    criarJogadores("B", total);
+  }
+
+  function criarJogadores(sufixo, total) {
+    const container = document.getElementById("form-jogadores" + sufixo);
+    container.innerHTML = "";
+
+    const esporte = document.getElementById("esporte").value;
+    const opcoesFutebol = ["Goleiro", "Zagueiro", "Lateral", "Meio-Campo", "Atacante"];
+    const opcoesBasquete = ["Armador", "Ala", "Ala-Armador", "Ala-Pivô", "Pivô"];
+    const opcoes = esporte === "basquete" ? opcoesBasquete : opcoesFutebol;
+
+    for (let i = 1; i <= total; i++) {
+      const div = document.createElement("div");
+      div.className = "jogador-card";
+
+      let select = `<select id="jogadorPosicao${sufixo}_${i}">
+                      <option value="">Posição</option>`;
+      opcoes.forEach(op => {
+        select += `<option>${op}</option>`;
+      });
+      select += `</select>`;
+
+      div.innerHTML = `
+        <label>Jogador ${i}</label>
+        <input type="text" id="jogadorNome${sufixo}_${i}" placeholder="Nome">
+        <input type="number" id="jogadorCamisa${sufixo}_${i}" placeholder="Camisa">
+        ${select}
+      `;
+      container.appendChild(div);
+    }
+  }
+
+  function coletarJogadores(sufixo) {
+    const esporte = document.getElementById("esporte").value;
+    const total = esporte === "futebol" ? 11 : 5;
+    const jogadores = [];
+
+    for (let i = 1; i <= total; i++) {
+      jogadores.push({
+        nome: document.getElementById(`jogadorNome${sufixo}_${i}`).value || `Jogador ${i}`,
+        camisa: document.getElementById(`jogadorCamisa${sufixo}_${i}`).value || '',
+        posicao: document.getElementById(`jogadorPosicao${sufixo}_${i}`).value || ''
+      });
+    }
+
+    return jogadores;
+  }
+
+  function mostrarTime(sufixo) {
+    const data = {
+      tipo: document.getElementById("esporte").value,
+      acao: "escalacao",
+      mostrar: sufixo,
+      time: {
+        nome: document.getElementById(`nomeTime${sufixo}`).value || `Time ${sufixo}`,
+        tecnico: document.getElementById(`tecnico${sufixo}`).value || `Técnico ${sufixo}`,
+        jogadores: coletarJogadores(sufixo)
+      }
+    };
+    socket.send(JSON.stringify(data));
+  }
+
+  function ocultarEscalacao() {
+    socket.send(JSON.stringify({ acao: "ocultar_escalacao" }));
+  }
+
+  // Inicializa com futebol
+  montarTimes();
+</script>
+
+</body>
+</html>

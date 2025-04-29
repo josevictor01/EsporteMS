@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay Basquete Estilizado</title>
+  <style>
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: 'Arial Black', sans-serif;
+      color: white;
+    }
+
+    #placar-container {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, #0047ab, #002f6c);
+      border: 4px solid #ff0000;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      box-shadow: 0 0 15px #000;
+      gap: 20px;
+    }
+
+    .team {
+      font-size: 22px;
+      color: #ffffff;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .score {
+      font-size: 32px;
+      font-weight: bold;
+      background: #ffcc00;
+      color: #000;
+      padding: 5px 20px;
+      border-radius: 8px;
+    }
+
+    .tempo {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #d50000;
+      color: #fff;
+      padding: 3px 8px;
+      font-size: 14px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="placar-container">
+    <div class="tempo" id="tempoPeriodo">1º QUARTO - 00:00</div>
+    <div class="team" id="timeA">TIME A</div>
+    <div class="score" id="placar">0 x 0</div>
+    <div class="team" id="timeB">TIME B</div>
+  </div>
+
+  <script>
+    let startTime = null;
+    let intervalo = null;
+    let tempoRestante = 0;
+    let pausado = false;
+    let periodoAtual = "1º QUARTO";
+
+    const tempoPeriodo = document.getElementById("tempoPeriodo");
+
+    const socket = new WebSocket("ws://localhost:3000");
+
+    socket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+
+      if (data.tipo === "basquete") {
+        if (data.acao === "iniciar") {
+          document.getElementById("timeA").textContent = data.timeA;
+          document.getElementById("timeB").textContent = data.timeB;
+          document.getElementById("placar").textContent = `${data.pontosA} x ${data.pontosB}`;
+
+          tempoRestante = data.duracao;
+          periodoAtual = data.periodo;
+          if (intervalo) clearInterval(intervalo);
+          pausado = false;
+          startCountdown();
+        } else if (data.acao === "pausar") {
+          pausado = true;
+        } else if (data.acao === "retomar") {
+          pausado = false;
+        } else if (data.acao === "zerar") {
+          pausado = true;
+          if (intervalo) clearInterval(intervalo);
+          tempoPeriodo.textContent = `${periodoAtual} - 00:00`;
+        }
+      }
+    };
+
+    function startCountdown() {
+      intervalo = setInterval(() => {
+        if (!pausado && tempoRestante > 0) {
+          tempoRestante--;
+          tempoPeriodo.textContent = `${periodoAtual} - ${formatarTempo(tempoRestante)}`;
+        }
+      }, 1000);
+    }
+
+    function formatarTempo(segundos) {
+      const min = Math.floor(segundos / 60).toString().padStart(2, '0');
+      const sec = (segundos % 60).toString().padStart(2, '0');
+      return `${min}:${sec}`;
+    }
+  </script>
+</body>
+</html>

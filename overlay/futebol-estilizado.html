@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay Futebol - Corrigido</title>
+  <style>
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: 'Arial Black', sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+
+    #overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, #0047ab, #002f6c);
+      border: 4px solid #ff0000;
+      border-radius: 12px;
+      padding: 15px 30px;
+      box-shadow: 0 0 15px black;
+      gap: 40px;
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 150px;
+    }
+
+    .team-name {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .placar {
+      font-size: 36px;
+      background: #ffcc00;
+      color: #000;
+      padding: 10px 25px;
+      border-radius: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .tempo {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #d50000;
+      padding: 5px 15px;
+      border-radius: 0 0 10px 10px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .info-extra {
+      position: absolute;
+      top: 150px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #d50000;
+      border-radius: 0 0 8px 8px;
+      font-size: 18px;
+      color: #ffcc00;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .cartoes-central {
+      position: absolute;
+      top: 160px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      gap: 350px;
+    }
+
+    .cartoes {
+      display: flex;
+      gap: 3px;
+    }
+
+    .cartoes span {
+      display: inline-block;
+      width: 15px;
+      height: 20px;
+      border-radius: 3px;
+    }
+
+    .amarelo { background: yellow; }
+    .vermelho { background: red; }
+  </style>
+</head>
+<body>
+
+<div class="tempo" id="tempoJogo">1º TEMPO - 00:00</div>
+
+<div id="overlay">
+  <div class="team-info">
+    <div class="team-name" id="timeA">TIME A</div>
+  </div>
+
+  <div class="placar" id="placar">0 x 0</div>
+
+  <div class="team-info">
+    <div class="team-name" id="timeB">TIME B</div>
+  </div>
+</div>
+
+<div class="info-extra" id="infoExtra"></div>
+
+<div class="cartoes-central" id="cartoesCentral">
+  <div class="cartoes" id="cartoesA"></div>
+  <div class="cartoes" id="cartoesB"></div>
+</div>
+
+<script>
+  let startTime = null;
+  let intervalo = null;
+  let offsetMinutos = 0;
+  let pausado = true;
+  let tempoAtual = "1º TEMPO";
+  let cartoesVisiveis = true;
+
+  const socket = new WebSocket("ws://localhost:3000");
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.tipo === "futebol") {
+      if (data.acao === "iniciar") {
+        atualizarPlacar(data);
+        iniciarCronometro(data.minutos, data.tempo);
+      } else if (data.acao === "pausar") {
+        pausado = true;
+      } else if (data.acao === "retomar") {
+        pausado = false;
+      } else if (data.acao === "zerar") {
+        pausado = true;
+        if (intervalo) clearInterval(intervalo);
+        document.getElementById("tempoJogo").textContent = `${tempoAtual} - 00:00`;
+      } else if (data.acao === "acrescimos") {
+        document.getElementById("infoExtra").textContent = `+${data.valor}' de acréscimo`;
+      } else if (data.acao === "remover_acrescimos") {
+        document.getElementById("infoExtra").textContent = "";
+      } else if (data.acao === "cartoes") {
+        desenharCartoes('cartoesA', data.amarelosA, data.vermelhosA);
+        desenharCartoes('cartoesB', data.amarelosB, data.vermelhosB);
+        document.getElementById("cartoesCentral").style.display = 'flex';
+        cartoesVisiveis = true;
+      } else if (data.acao === "ocultar_cartoes") {
+        document.getElementById("cartoesCentral").style.display = 'none';
+        cartoesVisiveis = false;
+      } else if (data.acao === "mostrar_cartoes") {
+        document.getElementById("cartoesCentral").style.display = 'flex';
+        cartoesVisiveis = true;
+      }
+    }
+  };
+
+  function atualizarPlacar(data) {
+    document.getElementById("timeA").textContent = data.timeA;
+    document.getElementById("timeB").textContent = data.timeB;
+    document.getElementById("placar").textContent = `${data.golsA} x ${data.golsB}`;
+  }
+
+  function iniciarCronometro(minutos, tempo) {
+    offsetMinutos = parseInt(minutos) || 0;
+    tempoAtual = tempo;
+    startTime = Date.now();
+    if (intervalo) clearInterval(intervalo);
+    pausado = false;
+    intervalo = setInterval(atualizarTempo, 1000);
+  }
+
+  function atualizarTempo() {
+    if (!pausado) {
+      const segundos = Math.floor((Date.now() - startTime) / 1000) + offsetMinutos * 60;
+      const tempoFormatado = formatarTempo(segundos);
+      document.getElementById("tempoJogo").textContent = `${tempoAtual} - ${tempoFormatado}`;
+    }
+  }
+
+  function desenharCartoes(elementId, amarelos, vermelhos) {
+    const container = document.getElementById(elementId);
+    container.innerHTML = '';
+    for (let i = 0; i < amarelos; i++) {
+      const span = document.createElement('span');
+      span.className = 'amarelo';
+      container.appendChild(span);
+    }
+    for (let i = 0; i < vermelhos; i++) {
+      const span = document.createElement('span');
+      span.className = 'vermelho';
+      container.appendChild(span);
+    }
+  }
+
+  function formatarTempo(segundos) {
+    const min = String(Math.floor(segundos / 60)).padStart(2, '0');
+    const sec = String(segundos % 60).padStart(2, '0');
+    return `${min}:${sec}`;
+  }
+</script>
+
+</body>
+</html>

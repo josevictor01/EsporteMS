@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Overlay Escalação - Basquete</title>
+  <style>
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: 'Arial Black', sans-serif;
+      color: white;
+    }
+
+    #container {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, #0047ab, #002f6c);
+      border: 4px solid #ff0000;
+      border-radius: 12px;
+      padding: 20px 40px;
+      box-shadow: 0 0 15px black;
+      min-width: 400px;
+
+      /* Fade In / Out */
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      pointer-events: none;
+    }
+
+    #container.visivel {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .titulo {
+      text-align: center;
+      font-size: 24px;
+      color: #ffcc00;
+      margin-bottom: 10px;
+    }
+
+    .nome-time {
+      font-size: 22px;
+      font-weight: bold;
+      color: #ffcc00;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .tecnico {
+      font-size: 16px;
+      font-style: italic;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 15px;
+    }
+
+    li {
+      margin: 6px 0;
+      display: flex;
+      justify-content: space-between;
+      background-color: rgba(0,0,0,0.3);
+      padding: 4px 8px;
+      border-radius: 5px;
+    }
+
+    .camisa {
+      font-weight: bold;
+      color: #ffcc00;
+      min-width: 30px;
+    }
+
+    .posicao {
+      font-style: italic;
+      color: #cccccc;
+      text-align: right;
+      min-width: 80px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="container">
+  <div class="titulo">Escalação - Basquete</div>
+  <div class="nome-time" id="nomeTime">Time</div>
+  <div class="tecnico" id="tecnico">Técnico</div>
+  <ul id="listaJogadores"></ul>
+</div>
+
+<script>
+  const socket = new WebSocket("ws://localhost:3000");
+
+  const container = document.getElementById("container");
+  const nomeTime = document.getElementById("nomeTime");
+  const tecnico = document.getElementById("tecnico");
+  const lista = document.getElementById("listaJogadores");
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.acao === "escalacao" && data.time && data.tipo === "basquete") {
+      nomeTime.textContent = data.time.nome || "Time";
+      tecnico.textContent = "Técnico: " + (data.time.tecnico || "—");
+      lista.innerHTML = "";
+
+      data.time.jogadores.forEach(jogador => {
+        const li = document.createElement("li");
+
+        const camisaSpan = document.createElement("span");
+        camisaSpan.className = "camisa";
+        camisaSpan.textContent = jogador.camisa || "-";
+
+        const nomeSpan = document.createElement("span");
+        nomeSpan.textContent = jogador.nome || "Jogador";
+
+        const posicaoSpan = document.createElement("span");
+        posicaoSpan.className = "posicao";
+        posicaoSpan.textContent = jogador.posicao || "";
+
+        li.appendChild(camisaSpan);
+        li.appendChild(nomeSpan);
+        li.appendChild(posicaoSpan);
+        lista.appendChild(li);
+      });
+
+      container.classList.add("visivel");
+    }
+
+    if (data.acao === "ocultar_escalacao") {
+      container.classList.remove("visivel");
+    }
+  };
+</script>
+
+</body>
+</html>

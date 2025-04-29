@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay Futebol</title>
+</head>
+<body>
+  <h2 id="f_timeA">Time A</h2> - <span id="f_golsA">0</span> <br>
+  <h2 id="f_timeB">Time B</h2> - <span id="f_golsB">0</span> <br>
+  <p>Minutos: <span id="f_minutos">0</span></p>
+  <p>Tempo: <span id="f_tempo">1º Tempo</span></p>
+  <script>
+    const socket = new WebSocket("ws://localhost:3000");
+    socket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      if (data.tipo === "futebol") {
+        document.getElementById("f_timeA").textContent = data.timeA;
+        document.getElementById("f_golsA").textContent = data.golsA;
+        document.getElementById("f_timeB").textContent = data.timeB;
+        document.getElementById("f_golsB").textContent = data.golsB;
+        document.getElementById("f_minutos").textContent = data.minutos;
+        document.getElementById("f_tempo").textContent = data.tempo;
+      }
+    };
+  </script>
+</body>
+</html>
